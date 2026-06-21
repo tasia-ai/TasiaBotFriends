@@ -1,0 +1,41 @@
+# TasiaFriendClient — Friend/Lightweight Configuration
+# Copy this file to BepInEx/config/Tasia.FriendClient.cfg
+# No API keys needed. This client only receives/syncs Tasia from host.
+
+[FriendClient]
+# Enable the friend client receiver
+EnableTasiaFriendClient = true
+
+# Show Tasia's avatar/nameplate
+ShowTasiaAvatar = true
+ShowTasiaNameplate = true
+
+# Show speech bubble when Tasia speaks
+ShowSpeechBubble = true
+
+# Receive shared voice lines from host
+EnableSharedVoicePlayback = true
+
+# Smooth movement interpolation
+Interpolation = true
+
+# Hide avatar when host sync is stale (>5s)
+HideWhenStale = true
+
+# Require same mod version as host
+RequireSameVersion = true
+
+[Debug]
+# Show minimal debug info for friends
+ShowMinimalDebug = false
+
+[SyncServer]
+Enabled = false
+ServerUrl = ws://i.let-us.cyou:24222/ws
+RoomId = tasia-default
+RoomToken =
+
+# ---
+# Note: No AI config here. The friend client does NOT run Tasia's brain.
+# It only displays what the host broadcasts.
+# ---

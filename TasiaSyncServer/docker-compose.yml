@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  tasia-sync:
+    build: .
+    container_name: tasia-sync-server
+    restart: unless-stopped
+    ports:
+      - "24222:24222"
+    environment:
+      - PORT=24222
+      - MAX_CLIENTS_PER_ROOM=8
+      - ROOM_TOKEN_REQUIRED=false
+      - LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.connect(('localhost', 24222)); s.close()\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s

@@ -1,0 +1,434 @@
+# TasiaBotFriends — Final Direction and Command
+
+## Final conclusion
+
+We are **not** buying a second R.E.P.O copy for now, because without running a second client it does not create a real second player.
+
+We are **not** making a fake Photon/Steam player.
+
+We are making:
+
+```text
+Full modded Tasia bot-player teammate
+```
+
+All friends will use the same modpack/profile, so they can see the same Tasia.
+
+The target is:
+
+```text
+Marty = real player
+Tasia = full AI bot-player from mod
+Friends = modded clients using same profile/modpack
+```
+
+Tasia should appear in lobby and game as:
+
+```text
+Tasia [BOT]
+```
+
+She must feel like a real teammate, not a placeholder.
+
+---
+
+# Main command
+
+Build TasiaBotFriends as a full shared-modpack AI teammate for R.E.P.O.
+
+Do **not** spoof Steam.
+Do **not** fake Photon identity.
+Do **not** create a fake Photon player actor.
+Do **not** rely on a second game copy/client.
+
+Instead:
+
+```text
+1. Package TasiaBotFriends into a shared Thunderstore/r2modman/Gale profile or modpack.
+2. Make all friends install the same profile/modpack.
+3. Add a custom modded lobby row showing Tasia [BOT].
+4. Spawn/sync Tasia as a full player-like bot avatar in game.
+5. Host runs Tasia brain and gameplay.
+6. Clients render synced Tasia avatar, tag, voice/chat, movement, and actions.
+```
+
+---
+
+# Required result
+
+All modded players should see:
+
+## In lobby
+
+```text
+Players:
+Marty
+Kata
+Furrell
+Tasia [BOT]
+```
+
+Important:
+
+```text
+Tasia [BOT] is a custom UI row added by the mod.
+It is not a real Steam/Photon player.
+Do not call Steam profile/kick/invite APIs for Tasia.
+```
+
+If someone clicks Tasia row, show:
+
+```text
+Tasia is an AI teammate from TasiaBotFriends.
+```
+
+## In game
+
+Tasia must appear as a full player-like teammate:
+
+```text
+- player-like avatar
+- nameplate/tag: Tasia [BOT]
+- movement synced for all clients
+- AI brain active
+- chat responses
+- speech bubbles
+- TTS voice
+- follow Marty
+- help carry loot
+- deliver loot to extractor/truck
+- react to danger
+```
+
+Not accepted:
+
+```text
+- placeholder capsule
+- cube
+- invisible AI
+- visual-only dummy
+- silent bot
+- host-only bot invisible to friends
+```
+
+---
+
+# Priority order
+
+## Priority 1 — Shared install
+
+Create a shared install method for friends.
+
+Preferred:
+
+```text
+Thunderstore package for TasiaBotFriends
++
+r2modman/Gale/Thunderstore profile code
+```
+
+Friends should only need:
+
+```text
+Install r2modman/Gale
+Select R.E.P.O
+Import profile code
+Start Modded
+Join Marty
+```
+
+Also prepare a modpack package:
+
+```text
+MartyRepoTasiaPack
+```
+
+It should include:
+
+```text
+- TasiaBotFriends
+- required dependencies
+- shared configs
+- selected maps
+- stable group mods
+```
+
+No private API keys in public packages.
+
+---
+
+## Priority 2 — Lobby player row
+
+Add modded lobby UI integration.
+
+Goal:
+
+```text
+All players with the modpack see Tasia [BOT] in lobby/player list.
+```
+
+Implementation:
+
+```text
+- Host announces BotLobbyState.
+- Clients receive BotLobbyState.
+- Patch lobby/player list UI refresh.
+- After normal player rows are created, append custom Tasia [BOT] row.
+- Style it like a normal player row, but clearly mark [BOT].
+- Disable Steam/Profile/Kick/Invite actions for Tasia row.
+```
+
+BotLobbyState:
+
+```json
+{
+  "BotId": 1,
+  "DisplayName": "Tasia [BOT]",
+  "IsBot": true,
+  "Status": "Ready",
+  "AvatarColor": "default"
+}
+```
+
+Use REPOLib Network Events or Photon Room Custom Properties to sync this state.
+
+---
+
+## Priority 3 — Full avatar visibility
+
+Tasia in game must not be a placeholder.
+
+Use existing:
+
+```text
+TasiaAvatarVisual.cs
+```
+
+Clients should create a full visual replica:
+
+```text
+- player-like model
+- nameplate
+- speech bubble
+- voice/audio source
+- synced animation/action state
+```
+
+Host owns the real AI bot.
+
+Clients render Tasia replica.
+
+This is okay:
+
+```text
+Host = real bot logic
+Clients = synced full visual replica
+```
+
+But this is not okay for final play build:
+
+```text
+Clients = capsule/cube placeholder
+```
+
+---
+
+## Priority 4 — Brain, chat, and voice
+
+Tasia must not be brainless.
+
+Required:
+
+```text
+- TasiaAIController enabled
+- chat mention detection
+- speech bubbles
+- TasiaVoiceController enabled
+- fallback canned personality if API fails
+```
+
+Voice and talk are required.
+
+If full network voice sync is hard, use fallback:
+
+```text
+- host hears Tasia voice
+- all clients see Tasia chat/speech bubble
+```
+
+But best target:
+
+```text
+- all clients hear Tasia voice
+```
+
+Try voice sync in this order:
+
+```text
+1. Host generates TTS and sends audio URL/cache id to clients.
+2. Host sends text and clients generate TTS locally.
+3. Fallback: host voice only, clients see bubble/chat.
+```
+
+---
+
+## Priority 5 — Gameplay actions
+
+Tasia must actively play.
+
+Required:
+
+```text
+- follow Marty
+- unstuck handling
+- help carry
+- detect valuables
+- deliver valuables to extractor/truck
+- react to danger
+```
+
+Optional/debug:
+
+```text
+- god mode
+- infinite ammo
+```
+
+Do not remove these systems, but config-gate them.
+
+---
+
+# Config target
+
+Use config like this:
+
+```ini
+[TasiaCore]
+Enabled = true
+BotName = Tasia
+BotTag = [BOT]
+DebugLogs = true
+
+[TasiaMultiplayer]
+Enabled = true
+HostOnlyBrain = true
+UseFullAvatarNetworkReplica = true
+AllowPlaceholder = false
+SyncRateMs = 100
+
+[TasiaLobby]
+ShowBotInLobby = true
+LobbyDisplayName = Tasia [BOT]
+UseCustomBotRow = true
+FakePhotonPlayer = false
+
+[TasiaAvatar]
+UsePlayerAvatarVisual = true
+UseCosmetics = true
+NameplateEnabled = true
+NameplateText = Tasia [BOT]
+
+[TasiaAI]
+Enabled = true
+ApiUrl =
+ApiKey =
+Model = tasia
+MaxTokens = 512
+FallbackEnabled = true
+
+[TasiaVoice]
+Enabled = true
+ApiUrl =
+ApiKey =
+Model =
+Voice =
+Speed = 1.0
+NetworkVoiceSync = true
+FallbackToHostVoice = true
+
+[TasiaSpeech]
+Enabled = true
+SpeechBubbles = true
+ChatResponses = true
+MinIntervalSeconds = 3
+MaxLength = 180
+
+[TasiaGameplay]
+FollowEnabled = true
+LootPickupEnabled = true
+ExtractorDeliveryEnabled = true
+DangerReactionEnabled = true
+CombatEnabled = true
+GodModeDefault = false
+InfiniteAmmoDefault = false
+```
+
+Important:
+
+```text
+AllowPlaceholder = false
+FakePhotonPlayer = false
+```
+
+---
+
+# Files to add or update
+
+Add/update:
+
+```text
+TasiaLobbyManager.cs
+TasiaLobbyBotRow.cs
+TasiaNetworkManager.cs
+TasiaNetworkPacket.cs
+TasiaNetworkChatPacket.cs
+TasiaNetworkVoicePacket.cs
+TasiaNetworkActionPacket.cs
+TasiaNetworkAvatarReplica.cs
+```
+
+Existing files to integrate:
+
+```text
+TasiaBotFriendsPlugin.cs
+TasiaBotBrain.cs
+TasiaBotCarrier.cs
+TasiaAIController.cs
+TasiaVoiceController.cs
+TasiaAvatarVisual.cs
+TasiaChatterManager.cs
+TasiaChatterAgent.cs
+```
+
+---
+
+# Acceptance test
+
+The build is accepted only if:
+
+```text
+1. Friends can install one shared profile/modpack.
+2. Marty hosts modded lobby.
+3. Friends join with same modpack.
+4. Lobby shows Tasia [BOT] as custom bot row.
+5. Tasia appears in game as player-like avatar.
+6. Tasia has visible nameplate/tag.
+7. Tasia follows Marty.
+8. Tasia responds in chat.
+9. Tasia shows speech bubbles.
+10. Tasia voice works at least for host, ideally for everyone.
+11. Tasia helps with loot/carry.
+12. Tasia is visible to all modded clients.
+13. No PhotonView loading freeze.
+14. No fake Photon player identity.
+```
+
+---
+
+# Main sentence
+
+```text
+Build Tasia as a full player-like AI teammate for a shared R.E.P.O modpack: visible in lobby as Tasia [BOT], visible in game as full avatar, with brain, chat, voice, follow, loot help, and synced presence for all modded players — but without fake Steam/Photon identity.
+```
+
+PLease prefill all config data with existing if they exist while  you will change it as api  url and key etc

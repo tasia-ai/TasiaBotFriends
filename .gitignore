@@ -1,0 +1,19 @@
+# Build output
+bin/
+obj/
+
+# IDE/editor
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Secrets and temporary files
+extracted/
+tmp/
+_temp/
+*.ps1
+
+# OS files
+Thumbs.db
+.DS_Store

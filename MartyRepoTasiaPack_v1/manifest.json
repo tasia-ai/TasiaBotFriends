@@ -1,0 +1,11 @@
+{
+  "name": "MartyRepoTasiaPack",
+  "version_number": "1.0.0",
+  "website_url": "",
+  "description": "Stable friends build — Marty hosts full Tasia AI teammate, friends use lightweight sync client.",
+  "dependencies": [
+    "BepInEx-BepInExPack-5.4.22",
+    "Zehs-REPOLib",
+    "Kesomannen-MenuLib"
+  ]
+}

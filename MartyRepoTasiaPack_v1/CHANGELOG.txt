@@ -1,0 +1,14 @@
+# Changelog — MartyRepoTasiaPack
+
+## v1.0.0 (2026-06-21) — Stable Friends Build
+- Host: TasiaBotFriends with full AI brain, movement, loot, modes, map query, extraction
+- Friend: TasiaFriendClient lightweight sync receiver (no brain, no API keys)
+- Network sync via Photon RaiseEvent (position, rotation, mode, voice at 10Hz)
+- Remote avatar rendering with smooth interpolation, nameplate, speech bubble
+- Delivery-first pickup, careful carry, safe drop, extraction activation
+- 4 modes: FOLLOW, COLLECT, FIGHT, WAIT
+- Map query: where, loot, extraction, monster, status, lead to loot/extraction
+- Decision cooldown, timeout, fallback for brain
+- No teleport/snap movement
+- God mode config-gated, off by default
+- Debug HUD + AI debug panel + conversation log

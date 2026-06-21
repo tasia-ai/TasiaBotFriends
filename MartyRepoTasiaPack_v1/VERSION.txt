@@ -1,0 +1,6 @@
+MartyRepoTasiaPack v1 — Stable Friends Build
+Version: 1.0.0
+Date: 2026-06-21
+
+Host DLL: TasiaBotFriends v1.2.x (commit 3eea96d)
+Friend DLL: TasiaFriendClient v1.0.0

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>TasiaFriendClient</AssemblyName>
+    <LangVersion>12</LangVersion>
+    <Nullable>disable</Nullable>
+    <NoWarn>CS0169;CS0649</NoWarn>
+    <RootNamespace>TasiaFriendClient</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="BepInEx" HintPath="../lib/BepInEx.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="../lib/UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="../lib/UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="../lib/UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="UnityEngine.TextRenderingModule" HintPath="../lib/UnityEngine.TextRenderingModule.dll" Private="false" />
+    <Reference Include="UnityEngine.IMGUIModule" HintPath="../lib/UnityEngine.IMGUIModule.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="../lib/Assembly-CSharp.dll" Private="false" />
+    <Reference Include="PhotonUnityNetworking" HintPath="../lib/PhotonUnityNetworking.dll" Private="false" />
+    <Reference Include="Photon3Unity3D" HintPath="../lib/Photon3Unity3D.dll" Private="false" />
+    <Reference Include="PhotonRealtime" HintPath="../lib/PhotonRealtime.dll" Private="false" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="TasiaFriendClientPlugin.cs" />
+    <Compile Include="TasiaFriendAvatar.cs" />
+    <Compile Include="TasiaFriendSync.cs" />
+  </ItemGroup>
+</Project>

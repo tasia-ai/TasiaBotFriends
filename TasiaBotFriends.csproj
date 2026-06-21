@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>TasiaBotFriends</AssemblyName>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
+    <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8625;CS0169</NoWarn>
+    <RootNamespace>TasiaBotFriends</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="BepInEx" HintPath="lib/BepInEx.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="lib/0Harmony.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="lib/UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="lib/UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AIModule" HintPath="lib/UnityEngine.AIModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AudioModule" HintPath="lib/UnityEngine.AudioModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="lib/UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="UnityEngine.TextRenderingModule" HintPath="lib/UnityEngine.TextRenderingModule.dll" Private="false" />
+    <Reference Include="UnityEngine.IMGUIModule" HintPath="lib/UnityEngine.IMGUIModule.dll" Private="false" />
+    <Reference Include="UnityEngine.InputLegacyModule" HintPath="lib/UnityEngine.InputLegacyModule.dll" Private="false" />
+    <Reference Include="UnityEngine.UnityWebRequestModule" HintPath="lib/UnityEngine.UnityWebRequestModule.dll" Private="false" />
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule" HintPath="lib/UnityEngine.UnityWebRequestAudioModule.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="lib/Assembly-CSharp.dll" Private="false" />
+    <Reference Include="PhotonUnityNetworking" HintPath="lib/PhotonUnityNetworking.dll" Private="false" />
+    <Reference Include="Photon3Unity3D" HintPath="lib/Photon3Unity3D.dll" Private="false" />
+    <Reference Include="PhotonRealtime" HintPath="lib/PhotonRealtime.dll" Private="false" />
+    <Reference Include="System.Net.Http" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="source/**/*.cs" />
+    <Compile Remove="extracted/**/*.cs" />
+    <Compile Remove="light/**/*.cs" />
+  </ItemGroup>
+</Project>

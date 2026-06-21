@@ -1,0 +1,77 @@
+# TasiaBotFriends — Host Configuration Template
+# Copy this file to BepInEx/config/Tasia.BotFriends.cfg
+# Then add your private API keys locally.
+# DO NOT commit this file with keys to Git or share publicly.
+
+[BotFriends]
+ExtraBots = 1
+BotSpeed = 4.75
+FollowPlayer = false
+AutonomousPatrol = false
+FetchValuables = true
+PickupSearchRadius = 28
+ExtractorStopDistance = 1.75
+EnableWeapons = true
+WeaponSearchRadius = 35
+GiveStarterGun = true
+
+[TasiaSpawn]
+SpawnOnLevelStart = true
+ManualSpawnKey = F8
+ManualDespawnKey = F9
+FollowToggleKey = F10
+
+[Keys]
+GodMode = F11
+GodModeEnabled = true
+
+[Brain]
+DecisionCooldownSeconds = 2.0
+RequestTimeoutSeconds = 3.0
+MinTimeBetweenRequests = 1.5
+UseFallbackOnTimeout = true
+
+[AI]
+Enabled = true
+ApiUrl =
+ApiKey =
+Model =
+
+[Speech]
+Enabled = true
+MinIntervalSeconds = 5
+
+[Voice]
+Enabled = false
+ApiUrl =
+ApiKey =
+Voice = en-US-AnaNeural
+Speed = 1.1
+EnableSharedVoicePlayback = true
+
+[Carry]
+MoveSpeedMultiplier = 0.45
+TurnSpeedMultiplier = 0.25
+ObstacleCheckDistance = 1.6
+StuckTimeout = 3.5
+FragileExtraCare = true
+
+[Multiplayer]
+EnableTasiaVisibility = true
+SyncRateHz = 10
+
+[Avatar]
+EnableTasiaAvatar = true
+
+[Debug]
+ShowHud = false
+ShowBrainDebug = false
+VerboseLogs = false
+EnableMartyTestGodMode = false
+
+[SyncServer]
+Enabled = false
+ServerUrl = ws://i.let-us.cyou:24222/ws
+RoomId = tasia-default
+RoomToken =
+SendRateHz = 10
