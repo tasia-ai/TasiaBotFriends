@@ -22,7 +22,7 @@ A private-lobby multiplayer-safe fork of **BotFriends** by Omniscye/Empress (GPL
 ### 🆕 TasiaBotFriends additions
 
 | Status|  Feature | Config Section | Details | Comment |
-|---------|---------------|---------|
+|---------|---------------|---------|--------|--------|
 | X | **Multiplayer** | `TasiaMultiplayer` | Host-only spawn in private lobbies  | curently removed due to incompatibility |
 | OK |**Spawn controls** | `TasiaSpawn` | Auto-spawn, respawn if lost, manual F8/F9 keys |
 |OK | **LLM/API brain** | `TasiaAI` | OpenAI-compatible API for AI-driven decisions |
