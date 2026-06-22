@@ -384,7 +384,11 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
     }
 
     private void Update() => RuntimeUpdate();
-    private void OnGUI()  => RuntimeOnGUI();
+
+    private void OnGUI()
+    {
+        TasiaOverlayNew.Instance?.DrawOverlay();
+    }
 
     internal void RuntimeUpdate()
     {
@@ -428,6 +432,10 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
         _runnerObject.hideFlags = HideFlags.HideAndDontSave;
         _runnerObject.AddComponent<TasiaRuntimeRunner>();
         Log.LogInfo("[Tasia] Runtime runner created.");
+        var overlayNew = new GameObject("TasiaOverlayNew"); Object.DontDestroyOnLoad(overlayNew); overlayNew.AddComponent<TasiaOverlayNew>();
+        //var overlayNew = new GameObject("TasiaOverlayNew");
+        Object.DontDestroyOnLoad(overlayNew);
+        overlayNew.AddComponent<TasiaOverlayNew>();
 
         // Create overlay (floating Tasia button + menu)
         var overlay = new GameObject("TasiaOverlay");

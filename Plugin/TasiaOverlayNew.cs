@@ -5,6 +5,12 @@ namespace TasiaBotFriends;
 internal sealed class TasiaOverlayNew : MonoBehaviour
 {
     internal static TasiaOverlayNew Instance;
+    internal void DrawOverlay()
+    {
+        if (GUI.Button(new Rect(Screen.width - 90, 12, 80, 28), "Tasia")) _show = !_show;
+        if (!_show) return;
+        _winRect = GUI.Window(999, _winRect, WinFn, "Tasia Control");
+    }
     private bool _show;
     private Rect _btnRect = new Rect(Screen.width - 90, 12, 80, 28);
     private Rect _winRect = new Rect(60, 60, 380, 400);
