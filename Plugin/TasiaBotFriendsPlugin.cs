@@ -155,6 +155,8 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
     private float _lastRequestTime;
     private CancellationTokenSource _cts;
     private string _lastSituationHash = "";
+    public string  LastAiRequest = "";
+    public string  LastAiResponse = "";
     public string  RecentChatMessage = "";
     public bool    ChatPending;
     public float   ChatTimestamp;
@@ -240,6 +242,7 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
     private ConfigEntry<string> ExtSyncToken;
     private ConfigEntry<float>  ExtSyncRateHz;
 
+internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
     internal float SyncRateHz => MpSyncRateHz?.Value ?? 10f;
 
     // ── Public carry config accessors ──
@@ -397,6 +400,7 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
     private void OnGUI()
     {
         TasiaOverlayNew.Instance?.DrawOverlay();
+        TasiaMenuLib.DrawDebug();
     }
 
     internal void RuntimeUpdate()
@@ -909,6 +913,8 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
             new { role = "user", content = stateJson }
         };
 
+        var stateStr = JsonConvert.SerializeObject(new { model = AiModel.Value, messages, max_tokens = AiMaxTokens.Value, temperature = (double)AiTemperature.Value, stream = false });
+        LastAiRequest = stateStr.Length > 200 ? stateStr.Substring(0, 200) : stateStr;
         var body = new { model = AiModel.Value, messages, max_tokens = AiMaxTokens.Value, temperature = (double)AiTemperature.Value, stream = false };
         using var request = new HttpRequestMessage(HttpMethod.Post, AiApiUrl.Value);
         if (!string.IsNullOrWhiteSpace(AiApiKey.Value)) request.Headers.Add("Authorization", $"Bearer {AiApiKey.Value}");
@@ -920,7 +926,9 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
             var response = await _http.SendAsync(request, _cts.Token);
             response.EnsureSuccessStatusCode();
             var text = await response.Content.ReadAsStringAsync();
-            return JObject.Parse(text)["choices"]?[0]?["message"]?["content"]?.ToString();
+            var resp = JObject.Parse(text)["choices"]?[0]?["message"]?["content"]?.ToString();
+            LastAiResponse = resp != null && resp.Length > 150 ? resp.Substring(0, 150) : resp;
+            return resp;
         }
         catch (Exception ex)
         {
@@ -2367,21 +2375,28 @@ internal sealed class TasiaBotBrain : MonoBehaviour
             return;
         }
 
-        if (_stuckTimer < 3f) return;
+        if (_stuckTimer < 2f) return;
+        var wasStuckLong = _stuckTimer > 8f;
         _stuckTimer = 0f;
         ExternalControl = false;
 
         if (_agent && _agent.enabled && _agent.isOnNavMesh) _agent.ResetPath();
 
+        TasiaBotFriendsPlugin.Log.LogInfo("[TasiaMove] Stuck, retargeting to player...");
+
         if (!TasiaBotFriendsPlugin.TryGetPlayerTransform(out var player)) return;
         var dist = Vector3.Distance(transform.position, player.position);
 
-        // Do not teleport — use smooth path instead
-        if (dist > 8f)
+        if (dist > 5f)
         {
-            // Very far from player, use smooth destination, no warp
-            SetDestinationSafe(player.position, player.position);
             TasiaBotFriendsPlugin.Log.LogInfo($"[TasiaMove] Stuck far ({dist:F0}m), pathing to player.");
+            // Teleport if far OR stuck longer than 8s
+            if (dist > 12f || wasStuckLong)
+            {
+                SafeTeleportToPlayer();
+                return;
+            }
+            SetDestinationSafe(player.position, player.position);
         }
         else
         {
@@ -2434,10 +2449,134 @@ internal sealed class TasiaBotBrain : MonoBehaviour
     private bool EnforcePersonalSpace()
     {
         if (!TasiaBotFriendsPlugin.TryGetPlayerTransform(out var player)) return false;
-        if (Vector3.Distance(transform.position, player.position) >= 2.35f) return false;
-        MoveAwayFromPlayer(player);
-        _retargetTimer = Mathf.Max(_retargetTimer, 0.6f);
-        return true;
+        var dist = Vector3.Distance(transform.position, player.position);
+        
+        // 1. Too close to player
+        if (dist < 1.5f)
+        {
+            MoveAwayFromPlayer(player);
+            _retargetTimer = Mathf.Max(_retargetTimer, 0.8f);
+            return true;
+        }
+
+        // 2. In front of player within 3m
+        if (dist < 3f)
+        {
+            var toTasia = (transform.position - player.position).FlatY().normalized;
+            var playerFwd = player.forward.FlatY().normalized;
+            if (Vector3.Dot(toTasia, playerFwd) > 0.3f)
+            {
+                // Tasia is in front cone - sidestep
+                Sidestep(player);
+                return true;
+            }
+        }
+
+        // 3. Blocking path / corridor
+        if (IsBlockingPath(player))
+        {
+            BackUp();
+            return true;
+        }
+
+        return false;
+    }
+
+    private void Sidestep(Transform player)
+    {
+        if (!_agent || !_agent.enabled || !_agent.isOnNavMesh) return;
+        // Move to side of player
+        var right = player.right.FlatY().normalized;
+        var side = Random.value < 0.5f ? right : -right;
+        var target = player.position + side * 2.5f + (-player.forward.FlatY().normalized) * 1.5f;
+        SetDestinationSafe(target, player.position);
+    }
+
+    private void BackUp()
+    {
+        if (!_agent || !_agent.enabled || !_agent.isOnNavMesh) return;
+        var back = (-transform.forward).FlatY().normalized * 2f + transform.position;
+        SetDestinationSafe(back, transform.position);
+    }
+
+    private void SafeTeleportToPlayer()
+    {
+        if (!TasiaBotFriendsPlugin.TryGetPlayerTransform(out var player)) return;
+        if (!_agent || !_agent.enabled) return;
+
+        // Try to find a safe position around player
+        var pos = FindSafeTeleportPosition(player);
+        if (pos == null) return;
+
+        TasiaBotFriendsPlugin.Log.LogInfo($"[TasiaMove] Teleport reason: stuck/far to player pos");
+
+        // Warn before teleport
+        var bubble = GetComponent<TasiaBotBrain>() != null;
+        TasiaBotFriendsPlugin.Instance?.ShowBubble(gameObject, "Coming to you.");
+
+        // Teleport
+        var navPos = pos.Value;
+        if (NavMesh.SamplePosition(navPos, out var hit, 3f, -1))
+            _agent.Warp(hit.position);
+        else
+            _agent.Warp(navPos);
+
+        // After teleport, wait and orient
+        _retargetTimer = 1f;
+    }
+
+    private Vector3? FindSafeTeleportPosition(Transform player)
+    {
+        var playerFwd = player.forward.FlatY().normalized;
+        var playerRight = player.right.FlatY().normalized;
+        if (playerFwd.sqrMagnitude < 0.01f) playerFwd = Vector3.forward;
+        if (playerRight.sqrMagnitude < 0.01f) playerRight = Vector3.right;
+
+        // Try positions: left-back, right-back, behind
+        var slots = new Vector3[]
+        {
+            player.position + (-playerFwd + playerRight).normalized * 4f + Vector3.up * 0.2f,  // right-back
+            player.position + (-playerFwd - playerRight).normalized * 4f + Vector3.up * 0.2f,  // left-back
+            player.position + (-playerFwd).normalized * 4.5f + Vector3.up * 0.2f,              // behind
+        };
+
+        foreach (var slot in slots)
+        {
+            // Validate: not in front cone, not too close
+            var toSlot = (slot - player.position).FlatY().normalized;
+            if (Vector3.Dot(toSlot, playerFwd) > 0.1f)
+                continue; // in front of player, skip
+
+            // Must have NavMesh
+            if (!NavMesh.SamplePosition(slot, out var hit, 2f, -1))
+                continue;
+
+            // Must have clear space
+            if (Physics.CheckSphere(hit.position, 0.8f))
+                continue;
+
+            return hit.position;
+        }
+
+        return null;
+    }
+
+    private bool IsBlockingPath(Transform player)
+    {
+        // Check if Tasia is directly between player and something
+        var toPlayer = (player.position - transform.position).FlatY();
+        var toTasia = (transform.position - player.position).FlatY();
+        var playerFwd = player.forward.FlatY().normalized;
+        
+        // Check if player is looking at Tasia from close
+        if (toPlayer.sqrMagnitude < 16f && Vector3.Dot(playerFwd, toTasia.normalized) > 0.2f)
+        {
+            // Player is looking this way and Tasia is in the way
+            // Also check if there's a NavMesh edge near (doorway)
+            if (!NavMesh.SamplePosition(transform.position + playerFwd * 1.5f, out _, 1f, -1))
+                return true; // Near navmesh edge = doorway/corridor
+        }
+        return false;
     }
 
     // ══════════════════════════════════════════════════════
@@ -3004,6 +3143,22 @@ internal sealed class TasiaBotCarrier : MonoBehaviour
         if (_retargetTimer > 0f) return;
         _retargetTimer = Random.Range(1f, 1.6f);
 
+        // Check if unarmed and weapon is nearby - prioritize weapon
+        var weapon = GetComponent<TasiaBotWeaponUser>();
+        if ((weapon == null || !weapon.HasGun) && ShouldPickUpGun())
+        {
+            var gun = FindNearestGun(transform.position, _searchRadius);
+            if (gun != null)
+            {
+                _busy = true; _busyTimer = 0f; _brain?.SetExternalControl(true);
+                if (_agent && _agent.enabled && _agent.isOnNavMesh)
+                    _agent.SetDestination(gun.transform.position);
+                _agent.stoppingDistance = 0.4f;
+                StartCoroutine(ApproachGun(gun));
+                return;
+            }
+        }
+
         // ── Before picking up loot, verify a delivery target exists ──
         if (!TryResolveActiveExtraction(out var deliveryGoal, out var deliveryEp))
         {
@@ -3137,6 +3292,32 @@ internal sealed class TasiaBotCarrier : MonoBehaviour
     }
 
     /// <summary>Find the best active extraction point — if none, find nearest not-activated one.</summary>
+    private bool IsExtractionFull(ExtractionPoint ep)
+    {
+        if (ep == null) return false;
+        try
+        {
+            // Check if extraction reached its money limit
+            var fieldValue = ep.GetType().GetField("totalMoneyExtracted");
+            if (fieldValue != null)
+            {
+                var total = (int)Convert.ChangeType(fieldValue.GetValue(ep), typeof(int));
+                var maxField = ep.GetType().GetField("maxMoney");
+                var max = maxField != null ? (int)Convert.ChangeType(maxField.GetValue(ep), typeof(int)) : 0;
+                if (max > 0 && total >= max) return true;
+            }
+            // Also check completed state
+            var completedField = ep.GetType().GetField("completed");
+            if (completedField != null)
+            {
+                var completed = (bool)completedField.GetValue(ep);
+                if (completed) return true;
+            }
+        }
+        catch { }
+        return false;
+    }
+
     internal bool TryResolveActiveExtraction(out Vector3 goal, out ExtractionPoint ep)
     {
         goal = transform.position;
@@ -3148,10 +3329,18 @@ internal sealed class TasiaBotCarrier : MonoBehaviour
             var nearest = SemiFunc.ExtractionPointGetNearest(transform.position);
             if (nearest != null && nearest.gameObject != null && nearest.gameObject.activeInHierarchy)
             {
-                ep = nearest;
-                goal = ep.transform.position;
-                TasiaBotFriendsPlugin.Log.LogInfo($"[TasiaExtraction] Active extraction '{ep.name}' at {Vector3.Distance(transform.position, goal):F0}m.");
-                return true;
+                // Check if extraction is full
+                if (IsExtractionFull(nearest))
+                {
+                    TasiaBotFriendsPlugin.Log.LogInfo($"[TasiaExtraction] Extraction '{nearest.name}' is full, searching for another.");
+                }
+                else
+                {
+                    ep = nearest;
+                    goal = ep.transform.position;
+                    TasiaBotFriendsPlugin.Log.LogInfo($"[TasiaExtraction] Active extraction '{ep.name}' at {Vector3.Distance(transform.position, goal):F0}m.");
+                    return true;
+                }
             }
 
             // 2. Nearest not-activated extraction (needs activation)
@@ -3287,6 +3476,56 @@ internal sealed class TasiaBotCarrier : MonoBehaviour
         return _agent.CalculatePath(hit.position, path) && path.status == NavMeshPathStatus.PathComplete;
     }
 
+    private bool ShouldPickUpGun()
+    {
+        // Only if guns enabled in config
+        if (!TasiaBotFriendsPlugin.Instance.EnableWeaponsCfg) return false;
+        // Only if safe
+        if (PerceptionDangerLevel() == "high") return false;
+        return true;
+    }
+
+    private string PerceptionDangerLevel()
+    {
+        if (_brain?.Perception != null) return _brain.Perception.DangerLevel;
+        return "low";
+    }
+
+    private System.Collections.IEnumerator ApproachGun(ItemGun g)
+    {
+        float time = 6f;
+        while (time > 0f && g != null && _agent != null && _agent.enabled && _agent.isOnNavMesh)
+        {
+            time -= Time.deltaTime;
+            if (Vector3.Distance(transform.position, g.transform.position) <= 1.9f) break;
+            yield return null;
+        }
+        if (g == null || Vector3.Distance(transform.position, g.transform.position) > 2.4f)
+        { ResetBusy(); yield break; }
+        
+        var w = GetComponent<TasiaBotWeaponUser>();
+        if (w != null)
+        {
+            w.EquipExternal(g);
+            TasiaBotFriendsPlugin.Log.LogInfo("[TasiaCarry] Picked up gun.");
+        }
+        _busy = false; _busyTimer = 0f; _brain?.SetExternalControl(false);
+    }
+
+    private static ItemGun FindNearestGun(Vector3 from, float radius)
+    {
+        ItemGun best = null; var bestSqr = radius * radius;
+        foreach (var g in Object.FindObjectsOfType<ItemGun>())
+        {
+            if (g == null || !g.gameObject.activeInHierarchy) continue;
+            var pgo = g.GetComponent<PhysGrabObject>();
+            if (pgo != null) { try { if (SemiFunc.PhysGrabObjectIsGrabbed(pgo)) continue; } catch { } }
+            var sqr = (g.transform.position - from).sqrMagnitude;
+            if (sqr < bestSqr) { bestSqr = sqr; best = g; }
+        }
+        return best;
+    }
+
     internal static PhysGrabObject FindNearestValuableGlobal(Vector3 from, float radius)
     {
         PhysGrabObject best = null;
@@ -3413,6 +3652,7 @@ internal sealed class TasiaBotWeaponUser : MonoBehaviour
         catch (Exception ex) { TasiaBotFriendsPlugin.Log.LogInfo($"[Tasia] Starter gun: {ex.Message}"); return false; }
     }
 
+internal void EquipExternal(ItemGun t) { EquipGun(t); }
     private void EquipGun(ItemGun target)
     {
         _gun = target; _pgo = target.GetComponent<PhysGrabObject>(); _rb = _pgo && _pgo.rb ? _pgo.rb : target.GetComponent<Rigidbody>();
@@ -3426,6 +3666,15 @@ internal sealed class TasiaBotWeaponUser : MonoBehaviour
         if (_gun.transform.parent != _hold) _gun.transform.SetParent(_hold, false);
         _gun.transform.localPosition = Vector3.zero; _gun.transform.localRotation = Quaternion.identity;
         if (_rb && !_rb.isKinematic) _rb.isKinematic = true;
+    }
+
+    internal void TryShoot()
+    {
+        _fireTimer -= Time.deltaTime;
+        if (_fireTimer > 0f) return;
+        _fireTimer = Random.Range(0.45f, 0.9f);
+        try { if (_gun != null) _gun.Shoot(); } catch { }
+        TryRefillAmmo();
     }
 
     private void AimAndShoot()
