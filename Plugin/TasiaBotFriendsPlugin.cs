@@ -388,6 +388,10 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
 
     internal void RuntimeUpdate()
     {
+        // Menu toggle always works (even in lobby)
+        if (Input.GetKeyDown(KeyCode.F7)) TasiaMenuLib.RequestToggle();
+        TasiaMenuLib.Process();
+
         // Hard gate: no gameplay actions outside real level
         if (!IsGameplayReady())
         {

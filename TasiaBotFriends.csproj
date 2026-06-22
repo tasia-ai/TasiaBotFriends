@@ -14,6 +14,7 @@
     <Reference Include="PhotonUnityNetworking" HintPath="lib/PhotonUnityNetworking.dll" Private="true" />
     <Reference Include="Photon3Unity3D" HintPath="lib/Photon3Unity3D.dll" Private="true" />
     <Reference Include="PhotonRealtime" HintPath="lib/PhotonRealtime.dll" Private="true" />
+    <Reference Include="MenuLib" HintPath="lib/MenuLib.dll" Private="false" />
     <Reference Include="0Harmony" HintPath="lib/0Harmony.dll" Private="false" />
     <Reference Include="UnityEngine" HintPath="lib/UnityEngine.dll" Private="false" />
     <Reference Include="UnityEngine.CoreModule" HintPath="lib/UnityEngine.CoreModule.dll" Private="false" />
