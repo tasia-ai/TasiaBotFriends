@@ -434,26 +434,26 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
         // Create the remote avatar receiver (client-side, listens for Photon events)
         if (AvatarEnabled.Value)
         {
-            var remote = new GameObject("TasiaRemoteAvatar");
-            DontDestroyOnLoad(remote);
-            remote.AddComponent<TasiaRemoteAvatar>();
-            Log.LogInfo("[TasiaNet] Remote avatar listener created.");
+            // TasiaRemoteAvatar removed
+            // remote removed
+            // remote removed
+            // Remote avatar removed
         }
 
         // External WebSocket sync
         if (ExtSyncEnabled.Value)
         {
-            TasiaExternalSync.ServerUrl = ExtSyncUrl.Value;
-            TasiaExternalSync.RoomId = ExtSyncRoom.Value;
-            TasiaExternalSync.RoomToken = ExtSyncToken.Value;
-            TasiaExternalSync.Role = "host";
-            TasiaExternalSync.SendRateHz = ExtSyncRateHz.Value;
-            TasiaExternalSync.Enabled = true;
+            // External sync removed
+            // External sync removed
+            // External sync removed
+            // External sync removed
+            // External sync removed
+            // External sync removed
 
             var syncObj = new GameObject("TasiaExternalSyncHost");
             DontDestroyOnLoad(syncObj);
-            syncObj.AddComponent<TasiaExternalSync>();
-            Log.LogInfo($"[TasiaSync] External sync enabled (host) → {ExtSyncUrl.Value}");
+            // External sync removed
+            // External sync removed
         }
     }
 
@@ -619,15 +619,15 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
         // Network host (sends state to other modded clients)
         if (MpVisibility.Value)
         {
-            var netHost = go.AddComponent<TasiaNetworkHost>();
-            Log.LogInfo("[TasiaNet] Network host component added.");
+            // TasiaNetworkHost removed
+            // Network removed
         }
 
         // External sync sender
         if (ExtSyncEnabled.Value)
         {
-            go.AddComponent<TasiaBotSyncSender>();
-            Log.LogInfo("[TasiaSync] External sync sender added to bot.");
+            // TasiaBotSyncSender removed
+            // Sync removed
         }
 
         Log.LogInfo($"[Tasia] Created bot @ {go.transform.position} active={go.activeInHierarchy} agentOnMesh={(agent.enabled && agent.isOnNavMesh)}");
@@ -972,8 +972,8 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
         // Broadcast voice line to other modded clients
         if (VoiceShared.Value && bot != null)
         {
-            var netHost = bot.GetComponent<TasiaNetworkHost>();
-            if (netHost != null) netHost.BroadcastVoice(text);
+            // TasiaNetworkHost removed (local only)
+            // voice broadcast removed
         }
     }
 

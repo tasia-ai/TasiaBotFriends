@@ -216,13 +216,13 @@ internal sealed class TasiaOverlay : MonoBehaviour
     {
         var plugin = TasiaBotFriendsPlugin.Instance;
 
-        StatusValue("External Sync", TasiaExternalSync.Enabled ? "enabled" : "disabled",
-            TasiaExternalSync.Enabled ? Color.green : Color.gray);
-        StatusValue("WebSocket", TasiaExternalSync.Connected ? "connected" : "disconnected",
-            TasiaExternalSync.Connected ? Color.green : Color.red);
-        StatusValue("Room ID", TasiaExternalSync.RoomId, Color.cyan);
-        StatusValue("Sync Age", TasiaExternalSync.Connected
-            ? $"{TasiaExternalSync.LastStateAge:F1}s" : "N/A");
+        StatusValue("External Sync", TasiaBotFriendsPlugin.VerboseLogging ? "enabled" : "disabled",
+            TasiaBotFriendsPlugin.VerboseLogging ? Color.green : Color.gray);
+        StatusValue("WebSocket", false ? "connected" : "disconnected",
+            false ? Color.green : Color.red);
+        StatusValue("Room ID", "local", Color.cyan);
+        StatusValue("Sync Age", false
+            ? $"{999f:F1}s" : "N/A");
         StatusValue("Protocol", "v1");
 
         GUILayout.Space(6);
