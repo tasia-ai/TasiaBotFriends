@@ -1,5 +1,7 @@
 using MenuLib;
 using MenuLib.MonoBehaviors;
+using UnityEngine.AI;
+using Object = UnityEngine.Object;
 using UnityEngine;
 using System.Collections;
 
@@ -12,49 +14,66 @@ internal static class TasiaMenuLib
 
     internal static void Process()
     {
-        if (_showRequested)
-        {
-            _showRequested = false;
-            TasiaBotFriendsPlugin.Log.LogInfo("[TasiaMenu] Toggle requested, initializing...");
-            Toggle();
-        }
+        if (_showRequested) { _showRequested = false; Toggle(); }
     }
 
-    internal static void RequestToggle()
-    {
-        _showRequested = true;
-        if (!_initialized)
-        {
-            _initialized = true;
-            TasiaBotFriendsPlugin.Log.LogInfo("[TasiaMenu] MenuLib ready.");
-        }
-    }
+    internal static void RequestToggle() { _showRequested = true; }
 
     private static void Toggle()
     {
-        if (MenuManager.instance == null)
-        {
-            TasiaBotFriendsPlugin.Log.LogInfo("[TasiaMenu] MenuManager.instance is NULL");
-            return;
-        }
+        if (MenuManager.instance == null) return;
+        if (_page != null && _page.isActiveAndEnabled) { Close(); return; }
 
-        if (_page != null && _page.isActiveAndEnabled)
-        {
-            Close();
-            return;
-        }
-
-        TasiaBotFriendsPlugin.Log.LogInfo("[TasiaMenu] Opening menu...");
         var page = MenuAPI.CreateREPOPopupPage("Tasia Control", REPOPopupPage.PresetSide.Right, false, true);
 
         page.AddElement(p => { MenuAPI.CreateREPOButton("Spawn (F8)", () => TasiaBotFriendsPlugin.Instance?.ManualSpawn("Menu"), p, new Vector2(250, 28)); });
         page.AddElement(p => { MenuAPI.CreateREPOButton("Despawn (F9)", () => TasiaBotFriendsPlugin.Instance?.RemoveAllBots(), p, new Vector2(250, 28)); });
-        page.AddElementToScrollView(sv => { return MenuAPI.CreateREPOLabel("-- Mode --", sv).rectTransform; });
-        page.AddElementToScrollView(sv => { var b = MenuAPI.CreateREPOButton("Collect", () => { var br = GetBot()?.GetComponent<TasiaBotBrain>(); if (br != null) br.SetFollowMode(false); }, sv); return b.rectTransform; });
-        page.AddElementToScrollView(sv => { var b = MenuAPI.CreateREPOButton("Follow", () => { var br = GetBot()?.GetComponent<TasiaBotBrain>(); if (br != null) br.SetFollowMode(true); }, sv); return b.rectTransform; });
-        page.AddElement(p => { MenuAPI.CreateREPOButton("Close", () => Close(), p, new Vector2(270, 24)); });
 
+        page.AddElementToScrollView(sv => { return MenuAPI.CreateREPOLabel("-- Modes --", sv).rectTransform; });
+        page.AddElementToScrollView(sv => { var b = MenuAPI.CreateREPOButton("Collect", () => DoMode(TasiaMode.COLLECT), sv); return b.rectTransform; });
+        page.AddElementToScrollView(sv => { var b = MenuAPI.CreateREPOButton("Follow", () => DoMode(TasiaMode.FOLLOW), sv); return b.rectTransform; });
+        page.AddElementToScrollView(sv => { var b = MenuAPI.CreateREPOButton("Fight", () => DoMode(TasiaMode.FIGHT), sv); return b.rectTransform; });
+        page.AddElementToScrollView(sv => { var b = MenuAPI.CreateREPOButton("Wait", () => DoMode(TasiaMode.WAIT), sv); return b.rectTransform; });
+
+        page.AddElementToScrollView(sv => { return MenuAPI.CreateREPOLabel("-- Tools --", sv).rectTransform; });
+        page.AddElementToScrollView(sv => { var b = MenuAPI.CreateREPOButton("Toggle Gun", () => ToggleGun(), sv); return b.rectTransform; });
+        page.AddElementToScrollView(sv => { var b = MenuAPI.CreateREPOButton("God Mode", () => TasiaBotFriendsPlugin.Instance?.ToggleGodModeExternal(), sv); return b.rectTransform; });
+
+        page.AddElement(p => { MenuAPI.CreateREPOButton("Close", () => Close(), p, new Vector2(270, 24)); });
         Open(page);
+    }
+
+    private static void DoMode(TasiaMode mode)
+    {
+        var bot = GetBot();
+        var brain = bot?.GetComponent<TasiaBotBrain>();
+        if (brain != null) brain.SetTasiaMode(mode);
+    }
+
+    private static void ToggleGun()
+    {
+        var bot = GetBot();
+        if (bot == null) return;
+        var weapon = bot.GetComponent<TasiaBotWeaponUser>();
+        if (weapon != null && weapon.HasGun)
+        {
+            var gun = bot.transform.Find("HoldPoint")?.GetComponentInChildren<ItemGun>();
+            if (gun != null) Object.Destroy(gun.gameObject);
+            Object.Destroy(weapon);
+            TasiaBotFriendsPlugin.Log.LogInfo("[TasiaMenu] Gun removed.");
+        }
+        else
+        {
+            var hold = bot.transform.Find("HoldPoint");
+            if (hold != null)
+            {
+                var w = bot.AddComponent<TasiaBotWeaponUser>();
+                var agent = bot.GetComponent<NavMeshAgent>();
+                var brain = bot.GetComponent<TasiaBotBrain>();
+                w.Init(agent, hold, brain, 35f, true);
+                TasiaBotFriendsPlugin.Log.LogInfo("[TasiaMenu] Gun added.");
+            }
+        }
     }
 
     private static void Open(REPOPopupPage page)

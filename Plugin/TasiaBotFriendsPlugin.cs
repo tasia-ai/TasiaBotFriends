@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -38,7 +39,8 @@ public enum TasiaIntent
     COME_TO_MARTY,       // Navigate to Marty's position
     FOLLOW_MARTY,        // Stay near Marty in formation
     FETCH_LOOT,          // Go pick up a valuable item
-    CARRY_TO_EXTRACTION, // Bring carried item to extraction
+    CARRY_TO_EXTRACTION,
+    DELIVER_TO_EXTRACTION,
     PLACE_ITEM_SAFE,     // Carefully put down a carried item
     HIDE,                // Find cover from danger
     RUN_AWAY,            // Flee from immediate threat
@@ -47,7 +49,14 @@ public enum TasiaIntent
     FIGHT,               // Engage enemies with gun
     SEARCH,              // Look for loot
     HELP,                // Assist Marty
-    IDLE,                // No task, wait
+    IDLE,
+    COLLECT_LOOT,
+    AVOID_DANGER,
+    HELP_MARTY,
+    RECOVER,
+    FIGHT_DEFENSIVE,
+    SPEAK_ONLY,
+    ATTACK_MONSTER_WITH_GUN,                // No task, wait
 }
 
 // ─── Structured decision from LLM ───
@@ -1812,18 +1821,22 @@ internal sealed class TasiaBotBrain : MonoBehaviour
                 SetState(TasiaState.Waiting);
                 break;
 
+            case TasiaIntent.HELP_MARTY:
             case TasiaIntent.HELP:
                 ExternalControl = false;
                 _retargetTimer = 0f;
                 SetState(TasiaState.Helping);
                 break;
 
+            case TasiaIntent.FIGHT_DEFENSIVE:
+            case TasiaIntent.ATTACK_MONSTER_WITH_GUN:
             case TasiaIntent.FIGHT:
                 if (_weapon) _weapon.ForceRetarget();
                 if (!HasGun()) // no gun, fall back to protect/follow
                     SetState(TasiaState.Protecting);
                 break;
 
+            case TasiaIntent.COLLECT_LOOT:
             case TasiaIntent.FETCH_LOOT:
             case TasiaIntent.SEARCH:
                 ExternalControl = false;
@@ -1832,6 +1845,7 @@ internal sealed class TasiaBotBrain : MonoBehaviour
                 break;
 
             case TasiaIntent.CARRY_TO_EXTRACTION:
+            case TasiaIntent.DELIVER_TO_EXTRACTION:
                 if (_carrier && _carrier.IsCarrying)
                 {
                     _carrier.ForceRetarget();
@@ -1851,6 +1865,7 @@ internal sealed class TasiaBotBrain : MonoBehaviour
                 SetState(TasiaState.Idle);
                 break;
 
+            case TasiaIntent.SPEAK_ONLY:
             case TasiaIntent.WARN_TEAM:
                 // Warning is already spoken via the ShowBubble above.
                 // No movement change needed.
@@ -2884,6 +2899,9 @@ internal sealed class TasiaBotCarrier : MonoBehaviour
     private float _dropDistance;
     private float _retargetTimer;
     private float _busyTimer;
+    private static List<int> _deliveredIds = new List<int>();
+    private float _dropCooldown;
+    private float _lastCleanup;
     private PhysGrabObject _carried;
     private Rigidbody _carriedRb;
     private bool _busy;
@@ -2980,6 +2998,8 @@ internal sealed class TasiaBotCarrier : MonoBehaviour
         if (_busy) { _busyTimer += Time.deltaTime; if (_busyTimer > 12f) ResetBusy(); return; }
 
         _brain?.SetExternalControl(false);
+        if (Time.time < _dropCooldown) return;
+        if (Time.time - _lastCleanup > 15f) { _lastCleanup = Time.time; _deliveredIds.Clear(); }
         _retargetTimer -= Time.deltaTime;
         if (_retargetTimer > 0f) return;
         _retargetTimer = Random.Range(1f, 1.6f);
@@ -3241,6 +3261,8 @@ internal sealed class TasiaBotCarrier : MonoBehaviour
 
     private void DropNow()
     {
+        _dropCooldown = Time.time + 1.5f;
+        if (_carried) { _deliveredIds.Add(_carried.GetInstanceID()); _lastCleanup = Time.time; }
         if (!_carried) { ResetBusy(); return; }
         try
         {
@@ -3273,6 +3295,7 @@ internal sealed class TasiaBotCarrier : MonoBehaviour
         {
             if (!pgo || !pgo.gameObject.activeInHierarchy || IsGrabbed(pgo) || !pgo.GetComponent<ValuableObject>()) continue;
             if (IsInsideExtractor(pgo.transform)) continue;
+            if (_deliveredIds.Contains(pgo.GetInstanceID())) continue;
             var sqr = (pgo.transform.position - from).sqrMagnitude;
             if (sqr < bestSqr) { bestSqr = sqr; best = pgo; }
         }
