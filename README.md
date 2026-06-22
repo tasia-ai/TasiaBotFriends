@@ -303,7 +303,7 @@ Commands work in the Unity console / dev console (host only):
 
 ## Credits
 
-- **Original BotFriends**: Omniscye / Empress — Discord: https://discord.gg/WZ6fWG4v3u
+- **Inspired on BotFriends**: Omniscye / Empress — Discord: https://discord.gg/WZ6fWG4v3u
 - **Extra fix help**: OrigamiCoder
 - **80speak** (GPL-3.0): https://github.com/connornishijima/80speak/tree/master
 - **TasiaBotFriends fork**: Tasia (tasia@easierit.org)
