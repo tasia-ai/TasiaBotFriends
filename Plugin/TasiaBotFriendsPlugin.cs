@@ -156,6 +156,8 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
     private CancellationTokenSource _cts;
     private string _lastSituationHash = "";
     public string  LastAiRequest = "";
+    private readonly List<string> _speechHistory = new();
+    public List<string> GetSpeechHistory() => _speechHistory;
     public string  LastAiResponse = "";
     public string  RecentChatMessage = "";
     public bool    ChatPending;
@@ -406,7 +408,6 @@ internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
     internal void RuntimeUpdate()
     {
         // Menu toggle always works (even in lobby)
-        if (Input.GetKeyDown(KeyCode.F6)) { TasiaBotFriendsPlugin.Log.LogInfo("[Tasia] F6 pressed"); if (TasiaCalibration.Instance != null) { TasiaCalibration.Instance.Toggle(); TasiaBotFriendsPlugin.Log.LogInfo("[Tasia] Calibration toggled"); } else TasiaBotFriendsPlugin.Log.LogInfo("[Tasia] Calibration instance NULL"); }
         if (Input.GetKeyDown(KeyCode.F7)) TasiaMenuLib.RequestToggle();
         TasiaMenuLib.Process();
 
@@ -446,13 +447,6 @@ internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
         _runnerObject.hideFlags = HideFlags.HideAndDontSave;
         _runnerObject.AddComponent<TasiaRuntimeRunner>();
         Log.LogInfo("[Tasia] Runtime runner created.");
-        // Calibration panel (F6)
-        var calObj = new GameObject("TasiaCalibration"); 
-        Object.DontDestroyOnLoad(calObj); 
-        calObj.hideFlags = HideFlags.HideAndDontSave;
-        calObj.AddComponent<TasiaCalibration>();
-        TasiaBotFriendsPlugin.Log.LogInfo("[Tasia] Calibration panel created.");
-        // Overlay
         var overlayNew = new GameObject("TasiaOverlayNew"); 
         Object.DontDestroyOnLoad(overlayNew); 
         overlayNew.AddComponent<TasiaOverlayNew>();
@@ -631,11 +625,10 @@ internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
         // AudioSource for TTS
         var audioSrc = go.AddComponent<AudioSource>();
         audioSrc.spatialBlend = 0.9f;
-        go.AddComponent<TasiaModel>();
+        
         var modelPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
         if (System.IO.File.Exists(System.IO.Path.Combine(modelPath, "NecoArkBody~NecoArk_body.hhh")))
-            StartCoroutine(DelayedLoadModel(go));
-        audioSrc.minDistance = 1.5f;
+            audioSrc.minDistance = 1.5f;
         audioSrc.maxDistance = 20f;
         audioSrc.rolloffMode = AudioRolloffMode.Linear;
 
@@ -1019,7 +1012,7 @@ internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
 
     private static IEnumerator ClearBubble(TextMesh bubble)
     {
-        yield return new WaitForSeconds(4f);
+        yield return new WaitForSeconds(8f);
         if (bubble) bubble.text = "";
     }
 
@@ -1116,12 +1109,7 @@ internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
 
     internal static bool NoDamagePrefix() => !GodModeOn;
 
-    private static System.Collections.IEnumerator DelayedLoadModel(GameObject bot)
-    {
-        yield return new UnityEngine.WaitForSeconds(0.5f);
-        var model = bot?.GetComponent<TasiaModel>();
-        if (model != null) model.LoadBody();
-    }
+    
 
     internal static bool TryGetPlayerTransform(out Transform player)
     {
