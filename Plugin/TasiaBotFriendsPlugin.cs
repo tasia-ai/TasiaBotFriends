@@ -624,6 +624,10 @@ internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
         // AudioSource for TTS
         var audioSrc = go.AddComponent<AudioSource>();
         audioSrc.spatialBlend = 0.9f;
+        go.AddComponent<TasiaModel>();
+        var modelPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        if (System.IO.File.Exists(System.IO.Path.Combine(modelPath, "NecoArkBody~NecoArk_body.hhh")))
+            StartCoroutine(DelayedLoadModel(go));
         audioSrc.minDistance = 1.5f;
         audioSrc.maxDistance = 20f;
         audioSrc.rolloffMode = AudioRolloffMode.Linear;
@@ -1104,6 +1108,13 @@ internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
     }
 
     internal static bool NoDamagePrefix() => !GodModeOn;
+
+    private static System.Collections.IEnumerator DelayedLoadModel(GameObject bot)
+    {
+        yield return new UnityEngine.WaitForSeconds(0.5f);
+        var model = bot?.GetComponent<TasiaModel>();
+        if (model != null) model.LoadBody();
+    }
 
     internal static bool TryGetPlayerTransform(out Transform player)
     {

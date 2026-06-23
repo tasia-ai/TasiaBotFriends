@@ -18,6 +18,7 @@
     <Reference Include="0Harmony" HintPath="lib/0Harmony.dll" Private="false" />
     <Reference Include="UnityEngine" HintPath="lib/UnityEngine.dll" Private="false" />
     <Reference Include="UnityEngine.CoreModule" HintPath="lib/UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AssetBundleModule" HintPath="lib/UnityEngine.AssetBundleModule.dll" Private="false" />
     <Reference Include="UnityEngine.AIModule" HintPath="lib/UnityEngine.AIModule.dll" Private="false" />
     <Reference Include="UnityEngine.AudioModule" HintPath="lib/UnityEngine.AudioModule.dll" Private="false" />
     <Reference Include="UnityEngine.PhysicsModule" HintPath="lib/UnityEngine.PhysicsModule.dll" Private="false" />
