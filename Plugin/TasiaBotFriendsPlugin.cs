@@ -406,6 +406,7 @@ internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
     internal void RuntimeUpdate()
     {
         // Menu toggle always works (even in lobby)
+        if (Input.GetKeyDown(KeyCode.F6)) { TasiaBotFriendsPlugin.Log.LogInfo("[Tasia] F6 pressed"); if (TasiaCalibration.Instance != null) { TasiaCalibration.Instance.Toggle(); TasiaBotFriendsPlugin.Log.LogInfo("[Tasia] Calibration toggled"); } else TasiaBotFriendsPlugin.Log.LogInfo("[Tasia] Calibration instance NULL"); }
         if (Input.GetKeyDown(KeyCode.F7)) TasiaMenuLib.RequestToggle();
         TasiaMenuLib.Process();
 
@@ -445,9 +446,15 @@ internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
         _runnerObject.hideFlags = HideFlags.HideAndDontSave;
         _runnerObject.AddComponent<TasiaRuntimeRunner>();
         Log.LogInfo("[Tasia] Runtime runner created.");
-        var overlayNew = new GameObject("TasiaOverlayNew"); Object.DontDestroyOnLoad(overlayNew); overlayNew.AddComponent<TasiaOverlayNew>();
-        //var overlayNew = new GameObject("TasiaOverlayNew");
-        Object.DontDestroyOnLoad(overlayNew);
+        // Calibration panel (F6)
+        var calObj = new GameObject("TasiaCalibration"); 
+        Object.DontDestroyOnLoad(calObj); 
+        calObj.hideFlags = HideFlags.HideAndDontSave;
+        calObj.AddComponent<TasiaCalibration>();
+        TasiaBotFriendsPlugin.Log.LogInfo("[Tasia] Calibration panel created.");
+        // Overlay
+        var overlayNew = new GameObject("TasiaOverlayNew"); 
+        Object.DontDestroyOnLoad(overlayNew); 
         overlayNew.AddComponent<TasiaOverlayNew>();
 
         // Create overlay (floating Tasia button + menu)

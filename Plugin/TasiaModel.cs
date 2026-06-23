@@ -12,11 +12,14 @@ internal sealed class TasiaModel : MonoBehaviour
     {
         try
         {
-            // Step 1: Aggressively hide ALL old renderers
+            // Step 1: Aggressively hide ALL old renderers (including root)
             foreach (var r in GetComponentsInChildren<Renderer>())
                 r.enabled = false;
             foreach (var tm in GetComponentsInChildren<TextMesh>())
                 tm.gameObject.SetActive(false);
+            // Also disable name tag text
+            foreach (var txt in GetComponentsInChildren<TextMesh>())
+                txt.text = "";
 
             // Log old bounds
             var oldBounds = GetOldBounds();
@@ -26,7 +29,7 @@ internal sealed class TasiaModel : MonoBehaviour
             var cfg = TasiaBotFriendsPlugin.Instance?.Config;
             if (cfg == null) return;
 
-            float cfgScale = cfg.Bind("Avatar", "ModelScale", 0.8f, "").Value;
+            float cfgScale = cfg.Bind("Avatar", "ModelScale", 0.5f, "").Value;
             float ox = cfg.Bind("Avatar", "OffsetX", 0f, "").Value;
             float oy = cfg.Bind("Avatar", "OffsetY", 0f, "").Value;
             float oz = cfg.Bind("Avatar", "OffsetZ", 0f, "").Value;
@@ -35,18 +38,18 @@ internal sealed class TasiaModel : MonoBehaviour
             float rz = cfg.Bind("Avatar", "RotZ", 0f, "").Value;
 
             // Step 3: Load parts
-            var partDefs = new[] {
-                ("NecoArkBody~NecoArk_body.hhh", 0f, 0.85f, 0f),
-                ("NecoArkHead~NecoArk_neck.hhh", 0f, 1.55f, 0f),
-                ("NecoArkHip~NecoArk_hip.hhh", 0f, 0.45f, 0f),
-                ("NecoArkLeftArm~NecoArk_leftarm.hhh", -0.4f, 0.95f, 0f),
-                ("NecoArkRightArm~NecoArk_rightarm.hhh", 0.4f, 0.95f, 0f),
-                ("NecoArkLeftLeg~NecoArk_leftleg.hhh", -0.15f, 0.25f, 0f),
-                ("NecoArkRightLeg~NecoArk_rightleg.hhh", 0.15f, 0.25f, 0f),
+            // Each part at its body position + global offset
+            var parts = new (string file, float py)[] {
+                ("NecoArkBody~NecoArk_body.hhh", 0.85f),
+                ("NecoArkHead~NecoArk_neck.hhh", 1.55f),
+                ("NecoArkHip~NecoArk_hip.hhh", 0.45f),
+                ("NecoArkLeftArm~NecoArk_leftarm.hhh", 0.95f),
+                ("NecoArkRightArm~NecoArk_rightarm.hhh", 0.95f),
+                ("NecoArkLeftLeg~NecoArk_leftleg.hhh", 0.25f),
+                ("NecoArkRightLeg~NecoArk_rightleg.hhh", 0.25f),
             };
-
-            foreach (var (file, lx, ly, lz) in partDefs)
-                LoadPart(file, cfgScale, ox + lx, oy + ly, oz + lz, rx, ry, rz);
+            foreach (var (f, py) in parts)
+                LoadPart(f, cfgScale, ox, oy + py, oz, rx, ry, rz);
 
             // Step 4: Log new bounds
             var newBounds = GetAvatarBounds();
@@ -121,6 +124,17 @@ internal sealed class TasiaModel : MonoBehaviour
             bundle.Unload(false);
         }
         catch { }
+    }
+
+    internal void ApplyLiveCalibration(float scale, float ox, float oy, float oz, float rx, float ry, float rz)
+    {
+        foreach (var p in _parts)
+        {
+            if (p == null) continue;
+            p.transform.localScale = Vector3.one * scale;
+            p.transform.localPosition = new Vector3(ox, oy, oz);
+            p.transform.localRotation = Quaternion.Euler(rx, ry, rz);
+        }
     }
 
     private void OnDestroy()
