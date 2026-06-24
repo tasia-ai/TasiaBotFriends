@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>TasiaNetwork</AssemblyName>
+    <LangVersion>12</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="BepInEx" HintPath="lib/BepInEx.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="lib/UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="lib/UnityEngine.CoreModule.dll" Private="false" />
+    <Compile Include="TasiaLoader.cs" />
+  </ItemGroup>
+</Project>

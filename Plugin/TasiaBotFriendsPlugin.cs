@@ -129,7 +129,7 @@ public struct PlayerCommand
 //  MAIN PLUGIN
 // ═══════════════════════════════════════════════════════════
 [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
-public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
+public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin, ITasiaNetworkStateProvider
 {
     public const string PluginGuid    = "Tasia.BotFriends";
     public const string PluginName    = "TasiaBotFriends";
@@ -242,8 +242,26 @@ public sealed class TasiaBotFriendsPlugin : BaseUnityPlugin
     private ConfigEntry<string> ExtSyncToken;
     private ConfigEntry<float>  ExtSyncRateHz;
 
-internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
+    internal bool EnableWeaponsCfg => EnableWeapons?.Value ?? true;
     internal float SyncRateHz => MpSyncRateHz?.Value ?? 10f;
+    bool ITasiaNetworkStateProvider.HasActiveTasia => _bots.Count > 0 && _bots[0] != null;
+
+    TasiaVisibleState ITasiaNetworkStateProvider.GetVisibleState()
+    {
+        var state = new TasiaVisibleState { Active = false };
+        if (_bots.Count == 0 || _bots[0] == null) return state;
+        var bot = _bots[0];
+        state.Active = true;
+        state.Position = bot.transform.position;
+        state.RotationY = bot.transform.eulerAngles.y;
+        var brain = bot.GetComponent<TasiaBotBrain>();
+        if (brain != null) { state.Intent = brain.CurrentIntent.ToString(); state.Mode = brain.CurrentMode.ToString(); }
+        var carrier = bot.GetComponent<TasiaBotCarrier>();
+        state.IsCarrying = carrier != null && carrier.IsCarrying;
+        var bubble = bot.transform.Find("SpeechBubble")?.GetComponent<TextMesh>();
+        if (bubble != null && !string.IsNullOrEmpty(bubble.text)) { state.SpeechText = bubble.text; state.IsSpeaking = true; }
+        return state;
+    }
 
     // ── Public carry config accessors ──
     internal static float CarrySpeedMul    => Instance?.CarryMoveSpeedMul?.Value ?? 0.45f;

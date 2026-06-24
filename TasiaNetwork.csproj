@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>TasiaNetwork_Core</AssemblyName>
+    <LangVersion>12</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp" HintPath="lib/Assembly-CSharp.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="lib/0Harmony.dll" Private="false" />
+    <Reference Include="BepInEx" HintPath="lib/BepInEx.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="lib/UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="lib/UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="lib/UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="UnityEngine.TextRenderingModule" HintPath="lib/UnityEngine.TextRenderingModule.dll" Private="false" />
+    <Compile Include="TasiaNetworkPlugin.cs" />
+  </ItemGroup>
+</Project>
